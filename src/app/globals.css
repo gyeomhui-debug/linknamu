@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fff7ee;
+  --foreground: #3b2f2a;
+  --muted: #8a7a70;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-border: rgba(120, 90, 70, 0.14);
+  --gradient: linear-gradient(160deg, #fffaf2 0%, #fff0e1 55%, #ffe3cf 100%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-muted: var(--muted);
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1d1713;
+    --foreground: #f6ebe1;
+    --muted: #b3a296;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 235, 220, 0.14);
+    --gradient: linear-gradient(160deg, #221a15 0%, #1d1713 55%, #2a1d16 100%);
   }
 }
 
 body {
-  background: var(--background);
+  background: var(--gradient);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  font-family: var(--font-sans);
 }
