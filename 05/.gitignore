@@ -1,0 +1,15 @@
+/node_modules
+/.next/
+/out/
+/build
+/coverage
+.DS_Store
+*.pem
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.env*
+
+# oh-my-claudecode 작업 상태
+.omc/

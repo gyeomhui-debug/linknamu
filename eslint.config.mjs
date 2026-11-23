@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 05/ 는 별도 Next.js 앱(할 일 플래너)이라 루트 린트 대상에서 제외
+    "05/**",
   ]),
 ]);
 
