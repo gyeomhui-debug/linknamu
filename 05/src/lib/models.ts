@@ -5,14 +5,35 @@ import { STATUSES, type Status, type TaskDTO, type WeeklyPlanDTO, type YearGoalD
 export { STATUSES };
 export type { Status, TaskDTO, WeeklyPlanDTO, YearGoalDTO };
 
+/** GitHub 계정으로 로그인한 사용자. github_id 가 유니크 키. */
+export type User = {
+  _id: ObjectId;
+  github_id: number;
+  username: string;
+  avatar_url: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+/** 서버 저장 세션. 토큰 원문은 저장하지 않고 SHA-256 해시만 둔다. */
+export type Session = {
+  _id: ObjectId;
+  token_hash: string;
+  user_id: ObjectId;
+  created_at: Date;
+  expires_at: Date;
+};
+
 export type YearGoal = {
   _id: ObjectId;
+  user_id: ObjectId; // 소유자
   year: number;
   title: string;
 };
 
 export type WeeklyPlan = {
   _id: ObjectId;
+  user_id: ObjectId; // 소유자
   year_goal_id: ObjectId | null;
   week_start: string; // YYYY-MM-DD
   week_end: string; // YYYY-MM-DD
@@ -23,6 +44,7 @@ export type WeeklyPlan = {
 
 export type Task = {
   _id: ObjectId;
+  user_id: ObjectId; // 소유자. 이 필드 도입 전 문서에는 없고 scripts/migrate-user-id.mjs 로 채운다.
   weekly_plan_id: ObjectId | null;
   date: string; // YYYY-MM-DD
   title: string;

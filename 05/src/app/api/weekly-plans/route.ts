@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { badRequest, cleanTitle, readBody, serverError } from "@/lib/api";
+import { requireUser } from "@/lib/auth";
 import { parseId, toWeeklyPlanDTO } from "@/lib/models";
 import { getCollections } from "@/lib/mongodb";
 import { addDays, isValidDate } from "@/lib/week";
 
 // ?yearGoalId=<id> 로 특정 1년 목표에 연결된 계획만 조회, ?weekStart=YYYY-MM-DD 로 특정 주만 조회
 export async function GET(request: Request) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
   const sp = new URL(request.url).searchParams;
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { user_id: auth.user._id };
   if (sp.has("yearGoalId")) {
     const gid = parseId(sp.get("yearGoalId"));
     if (!gid) return badRequest("잘못된 1년 목표 ID입니다.");
@@ -29,6 +32,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
   const body = await readBody(request);
   const title = cleanTitle(body?.title);
   if (!title) return badRequest("계획 제목을 입력해 주세요.");
@@ -43,11 +48,11 @@ export async function POST(request: Request) {
     const { yearGoals, weeklyPlans } = await getCollections();
     if (body?.year_goal_id != null) {
       year_goal_id = parseId(body.year_goal_id);
-      if (!year_goal_id || !(await yearGoals.findOne({ _id: year_goal_id }))) {
+      if (!year_goal_id || !(await yearGoals.findOne({ _id: year_goal_id, user_id: auth.user._id }))) {
         return badRequest("연결할 1년 목표를 찾을 수 없습니다.");
       }
     }
-    const doc = { _id: new ObjectId(), year_goal_id, week_start, week_end, title, progress: 0 };
+    const doc = { _id: new ObjectId(), user_id: auth.user._id, year_goal_id, week_start, week_end, title, progress: 0 };
     await weeklyPlans.insertOne(doc);
     return NextResponse.json(toWeeklyPlanDTO(doc), { status: 201 });
   } catch (e) {

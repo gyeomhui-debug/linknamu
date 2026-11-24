@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { badRequest, cleanTitle, notFound, readBody, serverError } from "@/lib/api";
+import { requireUser } from "@/lib/auth";
 import { parseId, toWeeklyPlanDTO } from "@/lib/models";
 import { getCollections } from "@/lib/mongodb";
 import { parseRetrospective, RETRO_MAX } from "@/lib/retro";
@@ -8,6 +9,9 @@ import { isValidDate } from "@/lib/week";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   const body = await readBody(request);
@@ -15,7 +19,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   try {
     const { weeklyPlans, yearGoals, tasks } = await getCollections();
-    const current = await weeklyPlans.findOne({ _id: id });
+    const current = await weeklyPlans.findOne({ _id: id, user_id: userId });
     if (!current) return notFound();
 
     const $set: Record<string, unknown> = {};
@@ -40,6 +44,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     if ("week_start" in body || "week_end" in body) {
       const outside = await tasks.countDocuments({
         weekly_plan_id: id,
+        user_id: userId,
         $or: [{ date: { $lt: start } }, { date: { $gt: end } }],
       });
       if (outside > 0) {
@@ -60,7 +65,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         $set.year_goal_id = null;
       } else {
         const gid = parseId(body.year_goal_id);
-        if (!gid || !(await yearGoals.findOne({ _id: gid }))) {
+        if (!gid || !(await yearGoals.findOne({ _id: gid, user_id: userId }))) {
           return badRequest("연결할 1년 목표를 찾을 수 없습니다.");
         }
         $set.year_goal_id = gid;
@@ -68,7 +73,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     }
     if (Object.keys($set).length === 0) return badRequest("변경할 내용이 없습니다.");
 
-    const doc = await weeklyPlans.findOneAndUpdate({ _id: id }, { $set }, { returnDocument: "after" });
+    const doc = await weeklyPlans.findOneAndUpdate({ _id: id, user_id: userId }, { $set }, { returnDocument: "after" });
     return doc ? NextResponse.json(toWeeklyPlanDTO(doc)) : notFound();
   } catch (e) {
     return serverError(e, "주간 계획을 수정하지 못했습니다.");
@@ -76,14 +81,17 @@ export async function PATCH(request: Request, { params }: Ctx) {
 }
 
 // 삭제 시 하위 할 일은 지우지 않고 연결만 해제한다.
-export async function DELETE(_request: Request, { params }: Ctx) {
+export async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   try {
     const { weeklyPlans, tasks } = await getCollections();
-    const { deletedCount } = await weeklyPlans.deleteOne({ _id: id });
+    const { deletedCount } = await weeklyPlans.deleteOne({ _id: id, user_id: userId });
     if (deletedCount === 0) return notFound();
-    await tasks.updateMany({ weekly_plan_id: id }, { $set: { weekly_plan_id: null } });
+    await tasks.updateMany({ weekly_plan_id: id, user_id: userId }, { $set: { weekly_plan_id: null } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return serverError(e, "주간 계획을 삭제하지 못했습니다.");

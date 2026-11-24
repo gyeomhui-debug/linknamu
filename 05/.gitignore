@@ -10,6 +10,8 @@ npm-debug.log*
 next-env.d.ts
 .vercel
 .env*
+# 자리표시자만 있는 예시 파일은 커밋한다
+!.env.example
 
 # oh-my-claudecode 작업 상태
 .omc/

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "migrate:user-id": "node --env-file=.env.local scripts/migrate-user-id.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

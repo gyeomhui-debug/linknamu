@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { badRequest, cleanTitle, readBody, serverError } from "@/lib/api";
+import { requireUser } from "@/lib/auth";
 import { parseId, toTaskDTO, type Task } from "@/lib/models";
 import { getCollections } from "@/lib/mongodb";
 import { recalcWeeklyPlan } from "@/lib/progress";
@@ -8,6 +9,8 @@ import { isValidDate, isWithin, rangeMessage } from "@/lib/week";
 
 // ?date=YYYY-MM-DD (날짜별) 또는 ?weeklyPlanId=<id> (계획별). 둘 다 없으면 400.
 export async function GET(request: Request) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
   const sp = new URL(request.url).searchParams;
   const filter: Record<string, unknown> = {};
   if (sp.has("date")) {
@@ -23,7 +26,7 @@ export async function GET(request: Request) {
   if (Object.keys(filter).length === 0) return badRequest("date 또는 weeklyPlanId가 필요합니다.");
   try {
     const { tasks } = await getCollections();
-    const docs = await tasks.find(filter).sort({ order: 1, _id: 1 }).toArray();
+    const docs = await tasks.find({ ...filter, user_id: auth.user._id }).sort({ order: 1, _id: 1 }).toArray();
     return NextResponse.json(docs.map(toTaskDTO));
   } catch (e) {
     return serverError(e, "할 일을 불러오지 못했습니다.");
@@ -31,6 +34,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
   const body = await readBody(request);
   const title = cleanTitle(body?.title);
   if (!title) return badRequest("제목을 입력해 주세요.");
@@ -43,7 +48,7 @@ export async function POST(request: Request) {
     let weekly_plan_id: ObjectId | null = null;
     if (body?.weekly_plan_id != null) {
       weekly_plan_id = parseId(body.weekly_plan_id);
-      const plan = weekly_plan_id ? await weeklyPlans.findOne({ _id: weekly_plan_id }) : null;
+      const plan = weekly_plan_id ? await weeklyPlans.findOne({ _id: weekly_plan_id, user_id: auth.user._id }) : null;
       if (!plan) return badRequest("연결할 주간 계획을 찾을 수 없습니다.");
       if (!isWithin(date, plan.week_start, plan.week_end)) {
         return badRequest(rangeMessage(plan.week_start, plan.week_end));
@@ -51,10 +56,11 @@ export async function POST(request: Request) {
     }
 
     // 같은 날짜의 todo 컬럼 맨 뒤에 추가
-    const last = await tasks.find({ date, status: "todo" }).sort({ order: -1 }).limit(1).next();
+    const last = await tasks.find({ date, status: "todo", user_id: auth.user._id }).sort({ order: -1 }).limit(1).next();
     const now = new Date();
     const doc: Task = {
       _id: new ObjectId(),
+      user_id: auth.user._id,
       weekly_plan_id,
       date,
       title,
@@ -64,7 +70,7 @@ export async function POST(request: Request) {
       status_changed_at: now,
     };
     await tasks.insertOne(doc);
-    await recalcWeeklyPlan(weekly_plan_id);
+    await recalcWeeklyPlan(weekly_plan_id, auth.user._id);
     return NextResponse.json(toTaskDTO(doc), { status: 201 });
   } catch (e) {
     return serverError(e, "할 일을 저장하지 못했습니다.");
