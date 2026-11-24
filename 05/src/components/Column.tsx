@@ -16,7 +16,7 @@ type Props = {
   onCarryOver: (t: TaskDTO, unit: CarryUnit) => void;
 };
 
-const DOT: Record<Status, string> = { todo: "bg-gray-400", doing: "bg-amber-500", done: "bg-emerald-500" };
+const DOT: Record<Status, string> = { todo: "bg-muted-soft", doing: "bg-accent", done: "bg-foreground" };
 
 export default function Column({ status, ids, tasksById, planTitles, onEdit, onDelete, onCarryOver }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
@@ -24,7 +24,7 @@ export default function Column({ status, ids, tasksById, planTitles, onEdit, onD
     <section
       aria-label={STATUS_LABEL[status]}
       className={`flex min-h-48 min-w-0 flex-col rounded-2xl border border-[var(--card-border)] p-3 transition-colors ${
-        isOver ? "bg-accent/10" : "bg-black/[0.03] dark:bg-white/[0.04]"
+        isOver ? "bg-accent/10" : "bg-surface-soft"
       }`}
     >
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">

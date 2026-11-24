@@ -35,7 +35,7 @@ export default function RetroMemo({ plan, onSaved }: { plan: WeeklyPlanDTO; onSa
           maxLength={RETRO_MAX}
           rows={3}
           placeholder="이번 주를 돌아보며 잘한 점, 아쉬운 점, 다음 주에 바꿀 점을 적어 보세요."
-          className="mt-1 w-full resize-y rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-2 text-sm text-foreground"
+          className="mt-1 w-full resize-y rounded-lg border border-[var(--card-border)] bg-white px-3.5 py-3 text-base text-foreground"
         />
       </label>
       <div className="mt-1 flex items-center gap-2 text-xs text-muted">
@@ -47,7 +47,7 @@ export default function RetroMemo({ plan, onSaved }: { plan: WeeklyPlanDTO; onSa
           type="button"
           onClick={save}
           disabled={!dirty || saving}
-          className="ml-auto rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="btn-primary btn-sm ml-auto"
         >
           {saving ? "저장 중…" : dirty ? "메모 저장" : "저장됨"}
         </button>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { badRequest, cleanTitle, notFound, readBody, serverError } from "@/lib/api";
+import { requireUser } from "@/lib/auth";
 import { parseId, toYearGoalDTO } from "@/lib/models";
 import { getCollections } from "@/lib/mongodb";
 import { getGoalProgressMap } from "@/lib/progress";
@@ -7,6 +8,9 @@ import { getGoalProgressMap } from "@/lib/progress";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   const body = await readBody(request);
@@ -27,9 +31,9 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   try {
     const { yearGoals } = await getCollections();
-    const doc = await yearGoals.findOneAndUpdate({ _id: id }, { $set }, { returnDocument: "after" });
+    const doc = await yearGoals.findOneAndUpdate({ _id: id, user_id: userId }, { $set }, { returnDocument: "after" });
     if (!doc) return notFound();
-    const progress = await getGoalProgressMap();
+    const progress = await getGoalProgressMap(userId);
     return NextResponse.json(toYearGoalDTO(doc, progress.get(id.toHexString()) ?? 0));
   } catch (e) {
     return serverError(e, "1년 목표를 수정하지 못했습니다.");
@@ -37,14 +41,17 @@ export async function PATCH(request: Request, { params }: Ctx) {
 }
 
 // 삭제 시 하위 주간 계획은 지우지 않고 연결만 해제한다.
-export async function DELETE(_request: Request, { params }: Ctx) {
+export async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   try {
     const { yearGoals, weeklyPlans } = await getCollections();
-    const { deletedCount } = await yearGoals.deleteOne({ _id: id });
+    const { deletedCount } = await yearGoals.deleteOne({ _id: id, user_id: userId });
     if (deletedCount === 0) return notFound();
-    await weeklyPlans.updateMany({ year_goal_id: id }, { $set: { year_goal_id: null } });
+    await weeklyPlans.updateMany({ year_goal_id: id, user_id: userId }, { $set: { year_goal_id: null } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return serverError(e, "1년 목표를 삭제하지 못했습니다.");

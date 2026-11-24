@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import type { Task, WeeklyPlan, YearGoal } from "./models";
+import type { Session, Task, User, WeeklyPlan, YearGoal } from "./models";
 
 const globalForMongo = globalThis as unknown as {
   _todoMongoClient?: Promise<MongoClient>;
@@ -24,5 +24,7 @@ export async function getCollections() {
     yearGoals: db.collection<YearGoal>("yearGoals"),
     weeklyPlans: db.collection<WeeklyPlan>("weeklyPlans"),
     tasks: db.collection<Task>("tasks"),
+    users: db.collection<User>("users"),
+    sessions: db.collection<Session>("sessions"),
   };
 }

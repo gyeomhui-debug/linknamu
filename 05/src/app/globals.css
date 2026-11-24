@@ -1,37 +1,137 @@
 @import "tailwindcss";
 
+/*
+ * 디자인 토큰 — Airbnb 스타일.
+ * 흰 캔버스 + 잉크(#222) + 단일 포인트 컬러 Rausch(#ff385c). 다크 모드는 없다(라이트 전용).
+ * Rausch 는 주요 CTA·브랜드 로고·인라인 링크·"진행 중" 표시에만 아껴 쓴다.
+ */
 :root {
-  --background: #f7f8fa;
-  --foreground: #1f2430;
-  --muted: #6b7280;
+  color-scheme: light;
+
+  --background: #ffffff; /* canvas */
+  --foreground: #222222; /* ink — 순수 검정을 쓰지 않는다 */
+  --body: #3f3f3f;
+  --muted: #6a6a6a;
+  --muted-soft: #929292;
+
   --card: #ffffff;
-  --card-border: rgba(31, 36, 48, 0.12);
-  --accent: #4f6bed;
+  --card-border: #dddddd; /* hairline */
+  --hairline-soft: #ebebeb;
+  --surface-soft: #f7f7f7;
+  --surface-strong: #f2f2f2;
+
+  --accent: #ff385c; /* Rausch */
+  --accent-active: #e00b41;
+  --accent-disabled: #ffd1da;
+
+  --error: #c13515;
+
+  /* 시스템에서 유일한 그림자 등급: 호버로 떠오르는 카드, 드롭다운, 모달 */
+  --shadow-card: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-body: var(--body);
   --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
   --color-card: var(--card);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-strong: var(--surface-strong);
   --color-accent: var(--accent);
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
-    "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-}
+  --color-accent-active: var(--accent-active);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #14171f;
-    --foreground: #eef0f5;
-    --muted: #9aa3b2;
-    --card: #1d212c;
-    --card-border: rgba(238, 240, 245, 0.14);
-    --accent: #7c93ff;
-  }
+  /* 오류·삭제는 Rausch 와 구분되는 더 진한 빨강 */
+  --color-red-500: var(--error);
+  --color-red-600: var(--error);
+
+  /* 부드러운 모서리: 버튼·입력 8px, 카드 14px, 알약/원은 rounded-full */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 0.875rem;
+
+  /* 그림자는 한 등급뿐 */
+  --shadow-lg: var(--shadow-card);
+  --shadow-xl: var(--shadow-card);
+
+  /* Airbnb Cereal VF / Circular 는 라이선스 폰트라 있으면 쓰고, 없으면 한글이 되는 시스템 스택으로 내려간다 */
+  --font-sans: "Airbnb Cereal VF", Circular, "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, Roboto, "Helvetica Neue", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 키보드 포커스는 잉크 외곽선(글로우·링 없음) */
+:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+/* 입력 포커스: 테두리가 2px 잉크로 두꺼워진다 (1px 테두리 + 1px 그림자) */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 1px var(--foreground);
+}
+
+@layer components {
+  /* 주요 CTA: Rausch 채움, 흰 글자, 8px 모서리. 눌림은 더 진한 Rausch, 비활성은 옅은 Rausch */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    border-radius: 0.5rem;
+    background: var(--accent);
+    padding: 0.5rem 1.25rem;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .btn-primary:active:not(:disabled) {
+    background: var(--accent-active);
+  }
+  .btn-primary:disabled {
+    background: var(--accent-disabled);
+    cursor: not-allowed;
+  }
+  .btn-primary.btn-sm {
+    min-height: 2rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* 보조 버튼: 흰 바탕 + 헤어라인 */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--card-border);
+    background: #fff;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .btn-outline:hover {
+    background: var(--surface-soft);
+  }
+
+  /* 카드: 평소엔 평평하고(그림자 없음) 포인터가 올라오면 한 등급 떠오른다 */
+  .card-float {
+    transition: box-shadow 0.15s;
+  }
+  .card-float:hover {
+    box-shadow: var(--shadow-card);
+  }
 }

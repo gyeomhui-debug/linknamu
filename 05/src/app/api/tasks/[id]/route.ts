@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { ObjectId } from "mongodb";
 import { badRequest, cleanTitle, notFound, readBody, serverError } from "@/lib/api";
+import { requireUser } from "@/lib/auth";
 import { isStatus, parseId, toTaskDTO, type Task } from "@/lib/models";
 import { getCollections } from "@/lib/mongodb";
 import { between, needsRenumber } from "@/lib/order";
@@ -16,6 +17,9 @@ type Ctx = { params: Promise<{ id: string }> };
  *  대상 컬럼(date+status) 안에서 그 사이에 끼워 넣는다. 위치 키가 없는데 컬럼이 바뀌면 맨 뒤에 붙인다.
  */
 export async function PATCH(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   const body = await readBody(request);
@@ -23,7 +27,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
   try {
     const { tasks, weeklyPlans } = await getCollections();
-    const current = await tasks.findOne({ _id: id });
+    const current = await tasks.findOne({ _id: id, user_id: userId });
     if (!current) return notFound();
 
     const $set: Partial<Task> = {};
@@ -45,7 +49,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         $set.weekly_plan_id = null;
       } else {
         const pid = parseId(body.weekly_plan_id);
-        if (!pid || !(await weeklyPlans.findOne({ _id: pid }))) {
+        if (!pid || !(await weeklyPlans.findOne({ _id: pid, user_id: userId }))) {
           return badRequest("연결할 주간 계획을 찾을 수 없습니다.");
         }
         $set.weekly_plan_id = pid;
@@ -56,7 +60,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     // (상태·순서만 바뀌는 드래그는 검사하지 않아, 예전에 저장된 기간 밖 데이터도 이동은 가능)
     const targetPlanId = "weekly_plan_id" in body ? ($set.weekly_plan_id ?? null) : current.weekly_plan_id;
     if (targetPlanId && ("date" in body || "weekly_plan_id" in body)) {
-      const plan = await weeklyPlans.findOne({ _id: targetPlanId });
+      const plan = await weeklyPlans.findOne({ _id: targetPlanId, user_id: userId });
       const date = $set.date ?? current.date;
       if (plan && !isWithin(date, plan.week_start, plan.week_end)) {
         return badRequest(rangeMessage(plan.week_start, plan.week_end));
@@ -78,14 +82,14 @@ export async function PATCH(request: Request, { params }: Ctx) {
         return badRequest("잘못된 이웃 카드 ID입니다.");
       }
       const [prev, next] = await Promise.all([
-        prevId ? tasks.findOne({ _id: prevId, date: targetDate, status: targetStatus }) : null,
-        nextId ? tasks.findOne({ _id: nextId, date: targetDate, status: targetStatus }) : null,
+        prevId ? tasks.findOne({ _id: prevId, date: targetDate, status: targetStatus, user_id: userId }) : null,
+        nextId ? tasks.findOne({ _id: nextId, date: targetDate, status: targetStatus, user_id: userId }) : null,
       ]);
       if ((prevId && !prev) || (nextId && !next)) return badRequest("이웃 카드가 대상 컬럼에 없습니다.");
 
       if (needsRenumber(prev?.order ?? null, next?.order ?? null)) {
         const col = await tasks
-          .find({ date: targetDate, status: targetStatus, _id: { $ne: id } })
+          .find({ date: targetDate, status: targetStatus, _id: { $ne: id }, user_id: userId })
           .sort({ order: 1, _id: 1 })
           .toArray();
         const ids = col.map((t) => t._id);
@@ -98,7 +102,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
       }
     } else if (columnChanged) {
       const last = await tasks
-        .find({ date: targetDate, status: targetStatus })
+        .find({ date: targetDate, status: targetStatus, user_id: userId })
         .sort({ order: -1 })
         .limit(1)
         .next();
@@ -109,7 +113,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     $set.updated_at = now;
     // 상태가 실제로 달라질 때만 상태 변경 시각을 기록 (제목·날짜·순서 수정은 유지)
     if ($set.status !== undefined && $set.status !== current.status) $set.status_changed_at = now;
-    const updated = await tasks.findOneAndUpdate({ _id: id }, { $set }, { returnDocument: "after" });
+    const updated = await tasks.findOneAndUpdate({ _id: id, user_id: userId }, { $set }, { returnDocument: "after" });
     if (!updated) return notFound();
 
     if (renumber) {
@@ -123,22 +127,25 @@ export async function PATCH(request: Request, { params }: Ctx) {
     // 상태·연결이 바뀌었을 수 있으므로 이전·새 계획을 모두 재계산
     const before = current.weekly_plan_id?.toHexString() ?? null;
     const after = updated.weekly_plan_id?.toHexString() ?? null;
-    await recalcWeeklyPlan(current.weekly_plan_id);
-    if (after !== before) await recalcWeeklyPlan(updated.weekly_plan_id);
+    await recalcWeeklyPlan(current.weekly_plan_id, userId);
+    if (after !== before) await recalcWeeklyPlan(updated.weekly_plan_id, userId);
     return NextResponse.json(toTaskDTO(updated));
   } catch (e) {
     return serverError(e, "할 일을 수정하지 못했습니다.");
   }
 }
 
-export async function DELETE(_request: Request, { params }: Ctx) {
+export async function DELETE(request: Request, { params }: Ctx) {
+  const auth = await requireUser(request);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user._id;
   const id = parseId((await params).id);
   if (!id) return badRequest("잘못된 ID입니다.");
   try {
     const { tasks } = await getCollections();
-    const doc = await tasks.findOneAndDelete({ _id: id });
+    const doc = await tasks.findOneAndDelete({ _id: id, user_id: userId });
     if (!doc) return notFound();
-    await recalcWeeklyPlan(doc.weekly_plan_id);
+    await recalcWeeklyPlan(doc.weekly_plan_id, userId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return serverError(e, "할 일을 삭제하지 못했습니다.");

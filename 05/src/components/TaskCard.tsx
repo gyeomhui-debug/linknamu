@@ -25,7 +25,7 @@ export function TaskCardView({ task, planTitle, onEdit, onDelete, onCarryOver }:
             <button
               key={unit}
               onClick={() => onCarryOver(task, unit)}
-              className="rounded-md border border-[var(--card-border)] px-2 py-1 text-[11px] text-muted hover:bg-black/5 dark:hover:bg-white/10"
+              className="rounded-md border border-[var(--card-border)] px-2 py-1 text-xs text-muted hover:bg-surface-soft"
               aria-label={`${task.title} ${CARRY_LABEL[unit]} 이월`}
             >
               ⏭ {CARRY_LABEL[unit]}
@@ -34,13 +34,13 @@ export function TaskCardView({ task, planTitle, onEdit, onDelete, onCarryOver }:
         </div>
       )}
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted" title="상태가 마지막으로 바뀐 시각">
+        <span className="text-xs text-muted" title="상태가 마지막으로 바뀐 시각">
           {new Date(task.status_changed_at).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
         </span>
         <span className="flex gap-1">
           <button
             onClick={() => onEdit(task)}
-            className="rounded px-2 py-1 text-xs text-muted hover:bg-black/5 dark:hover:bg-white/10"
+            className="rounded px-2 py-1 text-xs text-muted hover:bg-surface-soft"
             aria-label={`${task.title} 수정`}
           >
             수정
@@ -66,7 +66,7 @@ export default function TaskCard(props: Props) {
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`touch-manipulation list-none rounded-xl border border-[var(--card-border)] bg-card p-3 shadow-sm ${
+      className={`touch-manipulation list-none rounded-xl border border-[var(--card-border)] bg-card p-3 card-float ${
         isDragging ? "opacity-40" : ""
       }`}
       {...attributes}
