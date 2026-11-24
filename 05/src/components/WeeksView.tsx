@@ -9,7 +9,7 @@ import ProgressBar from "./ProgressBar";
 import RetroMemo from "./RetroMemo";
 import { useToast } from "./Toast";
 
-const field = "w-full rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-2 text-sm";
+const field = "w-full rounded-lg border border-[var(--card-border)] bg-white px-3.5 py-3 text-base";
 
 type FormValues = { title: string; week_start: string; week_end: string; year_goal_id: string | null };
 
@@ -48,7 +48,7 @@ function PlanForm({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={onClose}>
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
@@ -93,7 +93,7 @@ function PlanForm({
           <button type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-sm hover:bg-black/5">
             취소
           </button>
-          <button type="submit" disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? "저장 중…" : "저장"}
           </button>
         </div>
@@ -161,8 +161,8 @@ export default function WeeksView() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-4 flex items-center">
-        <h1 className="text-lg font-bold">주간 계획</h1>
-        <button onClick={() => setForm({})} className="ml-auto rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white">
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em]">주간 계획</h1>
+        <button onClick={() => setForm({})} className="btn-primary ml-auto">
           + 주간 계획 추가
         </button>
       </div>
@@ -206,7 +206,7 @@ export default function WeeksView() {
                 <select
                   value={p.year_goal_id ?? ""}
                   onChange={(e) => changeGoal(p, e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-transparent px-2 py-1.5 text-sm text-foreground"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-white px-2.5 py-2 text-sm text-foreground"
                   aria-label={`${p.title}에 연결할 1년 목표`}
                 >
                   <option value="">연결 안 함</option>

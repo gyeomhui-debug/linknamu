@@ -60,7 +60,7 @@ export default function DashboardView() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-4 flex items-baseline gap-2">
-        <h1 className="text-lg font-bold">대시보드</h1>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em]">대시보드</h1>
         {today && <span className="text-xs text-muted">{today} 기준</span>}
       </div>
 
@@ -134,7 +134,7 @@ function Body({ data, today }: { data: Data; today: string }) {
             <ProgressBar value={day.progress} />
             <dl className="grid grid-cols-3 gap-2 text-center">
               {STATUSES.map((s) => (
-                <div key={s} className="rounded-lg bg-black/5 py-2 dark:bg-white/10">
+                <div key={s} className="rounded-lg bg-surface-soft py-2">
                   <dd className="text-lg font-semibold tabular-nums">{day.counts[s]}</dd>
                   <dt className="text-xs text-muted">{STATUS_LABEL[s]}</dt>
                 </div>

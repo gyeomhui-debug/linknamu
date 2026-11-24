@@ -215,7 +215,7 @@ export default function DailyBoard({ dateParam, filter }: { dateParam?: string; 
   }
 
   const activeTask = activeId ? tasksById.get(activeId) : undefined;
-  const btn = "rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10";
+  const btn = "btn-outline";
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -223,7 +223,7 @@ export default function DailyBoard({ dateParam, filter }: { dateParam?: string; 
         <Link href={boardHref(date ? addDays(date, -1) : undefined, filter)} className={btn} aria-label="이전 날">
           ◀
         </Link>
-        <h1 className="min-w-28 text-lg font-bold">{date || " "}</h1>
+        <h1 className="min-w-28 text-[22px] font-semibold tracking-[-0.02em]">{date || " "}</h1>
         <Link href={boardHref(date ? addDays(date, 1) : undefined, filter)} className={btn} aria-label="다음 날">
           ▶
         </Link>
@@ -232,7 +232,7 @@ export default function DailyBoard({ dateParam, filter }: { dateParam?: string; 
             오늘
           </Link>
         )}
-        <button onClick={() => setForm({})} className="ml-auto rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white">
+        <button onClick={() => setForm({})} className="btn-primary ml-auto">
           + 할 일 추가
         </button>
       </div>
@@ -249,8 +249,8 @@ export default function DailyBoard({ dateParam, filter }: { dateParam?: string; 
               aria-current={active ? "page" : undefined}
               className={`rounded-full border px-3 py-1 text-sm ${
                 active
-                  ? "border-accent bg-accent text-white"
-                  : "border-[var(--card-border)] hover:bg-black/5 dark:hover:bg-white/10"
+                  ? "border-foreground bg-foreground text-white"
+                  : "border-[var(--card-border)] hover:bg-surface-soft"
               }`}
             >
               {label}

@@ -51,10 +51,10 @@ export default function TaskForm({ task, defaultDate, plans, onSubmit, onClose }
     }
   }
 
-  const field = "w-full rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-2 text-sm";
+  const field = "w-full rounded-lg border border-[var(--card-border)] bg-white px-3.5 py-3 text-base";
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
@@ -103,7 +103,7 @@ export default function TaskForm({ task, defaultDate, plans, onSubmit, onClose }
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="btn-primary"
           >
             {saving ? "저장 중…" : "저장"}
           </button>
